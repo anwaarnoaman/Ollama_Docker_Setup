@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    pull_policy: always
+    environment:
+      - OLLAMA_KEEP_ALIVE=-1 
+    tty: true
+    restart: always
+    ports:
+      - "11434:11434"
+    volumes:
+      - ./ollama:/root/.ollama
+      - ./entrypoint.sh:/entrypoint.sh
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all # alternatively, use `count: all` for all GPUs
+              capabilities: ['gpu']
+    entrypoint: ["/usr/bin/bash", "/entrypoint.sh"]
+
+
+  ollama-webui:
+    image: dyrnq/open-webui:latest
+    container_name: ollama-webui
+    ports:
+      - "3000:8080"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434 
+    volumes:
+      - ./open-webui:/app/backend/data
+    restart: always
+    depends_on:
+      - ollama    
+ 
